@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>打乱网易云音乐歌单顺序</title>
+    <style>
+        fieldset{margin: 1em 0em;}
+        .selected{color: red; font-weight:bold;}
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+    <form action="#" onsubmit="return login();"><fieldset>
+	    <div>
+	        <label for="email">邮箱：</label>
+	        <input type="text" id="email" style="width:12em" required>
+	    </div>
+		<div>
+	        <label for="password">密码：</label>
+	        <input type="password" id="password" style="width:12em" required >
+	    </div>
+	    <input type="submit" value="登录">
+	    <div style="display: flex; justify-content: flex-end"><label id="username">未登录</label></div>
+    </fieldset></form>
+
+    <fieldset>
+    	<legend>歌单列表(前100个)</legend>
+    	<div id="playlist"></div>
+    </fieldset>
+    <fieldset>
+        <legend id="music_legend">歌曲预览(前20首)</legend>
+        <ol id="music"></ol>
+    </fieldset>
+    <div>
+        <button type="button" onclick="shufflePlaylist()">打乱</button> 第 <input type="number" id="from" value="1" style="width:3em" min="1"> 首至第 <input type="number" id="to" style="width:3em" min="1"> 首
+    </div>
+    <fieldset>
+    	<legend>关于</legend>
+    	<p>此工具可用来打乱网易云音乐歌单列表，基于<a target="_blank" rel="noopener noreferrer" href="https://binaryify.github.io/NeteaseCloudMusicApi">网易云音乐API</a>。</p>
+    	<p>个人承诺不记录邮箱和密码，非好友不建议使用。</p>
+        <p>不超过2首歌的歌单或收藏的歌单不会显示在列表里。</p>
+    	<p>打乱若不填写则默认从第1首至最后1首。</p>
+    </fieldset>
+
+  </body>
+  <script src="SP163.js"></script>
+</html>
