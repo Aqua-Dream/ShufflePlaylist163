@@ -1,5 +1,7 @@
 var trackIds = [];
 var timestamp = Date.now();
+var prefix = "https://163-seven.vercel.app/"
+var suffix = "realIP=111.231.15.16"
 
 function escapeHtml(unsafe) {
   return unsafe
@@ -22,25 +24,36 @@ function escapeHtml(unsafe) {
 }
 
 $(document).ready(function() {
-  $.get('api/login/status', function(data){
-    if(data.code == 200){
-      loadUserInfo(data);
-    }
-  }, "json");
+  $.ajax({
+    url: prefix+'login/status?'+suffix, 
+    xhrFields: {withCredentials: true},
+    success: function(data){
+      data = data.data;
+      if(data.code == 200){
+        loadUserInfo(data);
+      }
+    }, 
+    error: function(err){console.log(err)}
+  });
 });
 
 function login(){
   var email =$("#email").val();
   var password = $("#password").val();
-  $.get('api/login', {email:email, password:password}, function(data){
-    if(data.code != 200){
-      alert("登陆失败："+data.msg);
-      return;
-    }
-    loadUserInfo(data);
-  }, "json");
+  $.ajax({
+    url: prefix+`login?email=${email}&password=${password}&`+suffix, 
+    xhrFields: {withCredentials: true},
+    success: function(data){
+      if(data.code != 200){
+        alert("登陆失败："+data.msg);
+        return;
+      }
+      loadUserInfo(data);
+    }, 
+    error: function(err){console.log(err)}
+  });
   return false;
-}
+};
 
 function loadUserInfo(data){
     $("#username").text("当前用户："+data.profile.nickname);
@@ -49,31 +62,41 @@ function loadUserInfo(data){
 }
 
 function getPlayList(uid){
-  $.get('api/user/playlist', {uid:uid, limit: 100}, function(data){
-    $("#playlist").empty();
-    var playlist = data.playlist;
-    playlist.filter(p => p.trackCount > 2 && p.creator.userId == uid).forEach(p =>
-      $("#playlist").append(`<a id="${p.id}" href="#" onclick="selectPlaylist(${p.id});return false;">${escapeHtml(p.name)}</a><br/>`)
-    );
-  },"json");
+  $.ajax({
+    url: prefix+`user/playlist?uid=${uid}&limit=100&`+suffix, 
+    xhrFields: {withCredentials: true},
+    success: function(data){
+      $("#playlist").empty();
+      var playlist = data.playlist;
+      playlist.filter(p => p.trackCount > 2 && p.creator.userId == uid).forEach(p =>
+        $("#playlist").append(`<a id="${p.id}" href="#" onclick="selectPlaylist(${p.id});return false;">${escapeHtml(p.name)}</a><br/>`)
+      );
+    }, 
+    error: function(err){console.log(err)}
+  });
 }
 
 function selectPlaylist(pid){
-  $.get("api/playlist/detail", {id:pid, timestamp:timestamp}, function(data){
-    if(data.code != 200){
-      alert("获取歌单详情失败："+data.msg);
-      return;
-    }
-    $("#music").empty();
-    $(".selected").removeClass("selected");
-    $(`#${pid}`).addClass("selected");
-    trackIds = data.playlist.trackIds.map(t => t.id);
-    var tracks = data.playlist.tracks;
-    tracks.slice(0, 20).forEach(m =>
-      $("#music").append(`<li>${escapeHtml(m.name)}</li>`)
-    );
-    window.location = "#music_legend";
-  }, "json");
+  $.ajax({
+    url: prefix+`playlist/detail?id=${pid}&timestamp=${timestamp}&`+suffix, 
+    xhrFields: {withCredentials: true},
+    success: function(data){
+      if(data.code != 200){
+        alert("获取歌单详情失败："+data.msg);
+        return;
+      }
+      $("#music").empty();
+      $(".selected").removeClass("selected");
+      $(`#${pid}`).addClass("selected");
+      trackIds = data.playlist.trackIds.map(t => t.id);
+      var tracks = data.playlist.tracks;
+      tracks.slice(0, 20).forEach(m =>
+        $("#music").append(`<li>${escapeHtml(m.name)}</li>`)
+      );
+      window.location = "#music_legend";
+    }, 
+    error: function(err){console.log(err)}
+  });
 }
 
 function shufflePlaylist(){
@@ -92,26 +115,36 @@ function shufflePlaylist(){
     return;
   }
   from--;
-  $.get("api/song/detail", {ids:`${trackIds[from]},${trackIds[to-1]}`}, function(data){
-    if(data.code != 200){
-      alert("获取歌曲详情失败："+data.msg);
-      return;
-    }
-    if(confirm(`确定要打乱歌单【${pname}】从【${data.songs[0].name}】到【${data.songs[1].name}】的所有歌曲吗？`)){
-      var shuffled = shuffle(trackIds.slice(from, to));
-      var i;
-      for(i=0;i<shuffled.length;i++){
-        trackIds[from+i] = shuffled[i];
+  $.ajax({
+    url: prefix+`song/detail?ids=${trackIds[from]},${trackIds[to-1]}&`+suffix, 
+    xhrFields: {withCredentials: true},
+    success: function(data){
+      if(data.code != 200){
+        alert("获取歌曲详情失败："+data.msg);
+        return;
       }
-      $.get("api/song/order/update",{pid:pid, ids:`[${trackIds.toString()}]`}, function(data){
-        if(data.code != 200){
-          alert("打乱歌单失败："+data.msg);
-          return;
+      if(confirm(`确定要打乱歌单【${pname}】从【${data.songs[0].name}】到【${data.songs[1].name}】的所有歌曲吗？`)){
+        var shuffled = shuffle(trackIds.slice(from, to));
+        var i;
+        for(i=0;i<shuffled.length;i++){
+          trackIds[from+i] = shuffled[i];
         }
-        alert("成功打乱歌单！");
-        timestamp = Date.now();
-        selectPlaylist(pid);
-      }, "json");
-    }
-  }, "json");
+        $.ajax({
+          url: prefix+`song/order/update?pid=${pid}&ids=[${trackIds.toString()}]&`+suffix, 
+          xhrFields: {withCredentials: true},
+          success: function(data){
+            if(data.code != 200){
+              alert("打乱歌单失败："+data.msg);
+              return;
+            }
+            alert("成功打乱歌单！");
+            timestamp = Date.now();
+            selectPlaylist(pid);
+          }, 
+          error: function(err){console.log(err)}
+        });
+      }
+    }, 
+    error: function(err){console.log(err)}
+  });
 }
